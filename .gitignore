@@ -5,7 +5,7 @@ media
 .DS_Store
 *.sqlite3
 *.env
-
+development.py
 # Accept these files in the repository
 !.gitignore
 !.travis.yml
