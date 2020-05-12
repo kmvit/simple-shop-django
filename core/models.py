@@ -1,18 +1,12 @@
 from django.db import models
 from django.conf import settings
 from django.urls import reverse
+from django.utils.html import mark_safe
 
-CATEGORY_CHOICES = (
-	('S', 'Shirt'),
-	('SW', 'Sport wear'),
-	('OW', 'Outwear'),
+LABEL = (
+	('primary','Новинка'),
+	('danger','Горячее'),
 )
-LABEL_CHOICES = (
-	('P', 'primary'),
-	('S', 'secondary'),
-	('D', 'danger'),
-)
-
 
 class Item(models.Model):
 	"""Товары"""
@@ -20,11 +14,16 @@ class Item(models.Model):
 	slug = models.SlugField(default='product')
 	price = models.FloatField(verbose_name='Цена')
 	discount_price = models.FloatField(blank=True, null=True, verbose_name='Скидка')
-	category = models.CharField(choices=CATEGORY_CHOICES, max_length=100, verbose_name='Категория')
-	label = models.CharField(choices=LABEL_CHOICES, max_length=100, verbose_name='Лэйбл')
 	description = models.TextField('Описание')
-
-
+	label_item = models.CharField(max_length=10, choices=LABEL, verbose_name='Лэйбл')
+	category_item = models.ForeignKey('CategoryItem', verbose_name='Категория товара',
+	                                  on_delete=models.SET_NULL,
+	                                  blank=True,
+	                                  null=True)
+	brend_item = models.ForeignKey('BrendItem',
+	                                  verbose_name='Бренд товара',
+	                                  on_delete=models.SET_NULL,
+	                                  blank=True, null=True)
 
 	def __str__(self):
 		return self.title
@@ -43,8 +42,76 @@ class Item(models.Model):
 		return reverse('core:remove-from-cart', kwargs={
 			'slug': self.slug
 		})
+	def get_characters(self):
+		return f'{"".join([p.title for p in self.character_item.all()])}' \
+		       f' - {"".join([p.description for p in self.character_item.all()])}'
 
 
+	def get_first_image(self):
+		"""Показ первой картинки"""
+		image = self.itemimage_set.all().first()
+		return image
+
+
+
+class ImageItem(models.Model):
+	image = models.ImageField(upload_to='item', verbose_name="Изображение")
+	item = models.ForeignKey(Item, verbose_name='Товара',
+	                         on_delete=models.SET_NULL,
+	                         blank=True, null=True, related_name='images')
+	class Meta:
+		verbose_name = 'Изображение товара'
+		verbose_name_plural = 'Изображения товара'
+
+	def __str__(self):
+		return self.image.name
+
+	def get_first_image(self, obj):
+		return obj.image.first()
+
+
+	def thumbnail(self):
+		return mark_safe('<img src="%s" height="150" width="150"/>' % (self.image.url))
+
+	thumbnail.short_description = 'Изображение'
+
+
+
+
+class CategoryItem(models.Model):
+	"""Категория товара"""
+	title = models.CharField(max_length=100, verbose_name='Категория товара')
+	slug = models.SlugField(unique=True, verbose_name='url')
+
+	class Meta:
+		verbose_name = 'Категории товара'
+		verbose_name_plural = 'Категория товара'
+
+	def __str__(self):
+		return self.title
+
+class CharacterItem(models.Model):
+	"""Характеристики товара"""
+	title = models.CharField(max_length=100, verbose_name='Название')
+	description = models.CharField(max_length=100, verbose_name='Значение')
+
+	class Meta:
+		verbose_name = 'Характеристики товара'
+		verbose_name_plural = 'Характеристика товара'
+
+	def __str__(self):
+		return self.title
+
+class BrendItem(models.Model):
+	"""Бренд товара"""
+	title = models.CharField(max_length=100, verbose_name='Название')
+
+	class Meta:
+		verbose_name = 'Бренд товара'
+		verbose_name_plural = 'Бренды'
+
+	def __str__(self):
+		return self.title
 
 class OrderItem(models.Model):
 	"""Элементы корзины пользователя"""
@@ -65,7 +132,7 @@ class OrderItem(models.Model):
 		return self.quantity * self.item.discount_price
 
 	def get_amount_saved(self):
-		return self.get_total_item_price() - self.get_total_discount_item_price()
+		return int(self.get_total_item_price() - self.get_total_discount_item_price())
 
 	def get_final_price(self):
 		if self.item.discount_price:

@@ -2,7 +2,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, View
-from .models import Item, OrderItem, Order, BillingAddress, Payment
+from .models import Item, OrderItem, Order, BillingAddress, Payment, ImageItem
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.decorators import login_required
@@ -150,6 +150,13 @@ class HomeView(ListView):
 	paginate_by = 10
 	template_name = 'home.html'
 
+	def get_context_data(self, *, object_list=None, **kwargs):
+		context = super(HomeView, self).get_context_data(**kwargs)
+		item = Item.objects.get(id=2)
+		first_image = item.images.first()
+		context['first_image'] = first_image.image.url
+		return context
+
 
 class OrderSummaryView(LoginRequiredMixin, View):
 	"""Отображение корзины с товарами"""
@@ -171,6 +178,11 @@ class OrderSummaryView(LoginRequiredMixin, View):
 class ItemDetailView(DetailView):
 	model = Item
 	template_name = 'product.html'
+
+	def get_context_data(self, **kwargs):
+		context = super(ItemDetailView, self).get_context_data(**kwargs)
+		context['first_image'] = self.object.images.first().image.url
+		return context
 
 @login_required
 def add_to_cart(request, slug):

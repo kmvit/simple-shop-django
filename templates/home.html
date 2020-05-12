@@ -65,7 +65,8 @@
 
               <!--Card image-->
               <div class="view overlay">
-                <img src="https://mdbootstrap.com/img/Photos/Horizontal/E-commerce/Vertical/12.jpg" class="card-img-top"
+
+                <img src="{{ first_image }}" class="card-img-top"
                   alt="">
                 <a href="{{ item.get_absolute_url }}">
                   <div class="mask rgba-white-slight"></div>
@@ -82,7 +83,7 @@
                 <h5>
                   <strong>
                     <a href="{{ item.get_absolute_url }}" class="dark-grey-text">{{ item.title }}
-                      <span class="badge badge-pill {{ item.get_label_display }}-color">NEW</span>
+                      <span class="badge badge-pill {{ item.label_item}}-color">{{ item.get_label_item_display }}</span>
                     </a>
                   </strong>
                 </h5>

@@ -20,7 +20,7 @@
             {% for order_item in object.items.all %}
               <tr>
                 <th scope="row">{{ forloop.counter }}</th>
-                <td>{{ order_item.item.title }}</td>
+                <td><a href="{% url 'core:product' order_item.item.slug %}">{{ order_item.item.title }}</a></td>
                 <td>{{ order_item.item.price }}</td>
                 <td>
                   <a href="{% url 'core:remove-single-item-from-cart' order_item.item.slug %}">
